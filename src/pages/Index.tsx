@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 
+const APPLY_URL = 'https://functions.poehali.dev/b839d72f-e05c-44f4-b265-512fc311173d';
+
 const HERO_IMG =
   'https://cdn.poehali.dev/projects/0d7f3f74-dcb1-4374-adf9-9768dc0253a4/files/b41257e6-c3fe-4035-92d1-fc44aba4f4be.jpg';
 
@@ -48,11 +50,13 @@ const STATUS_STEPS = [
   { key: 'done', label: 'Решение принято', icon: 'ShieldCheck' },
 ];
 
-function hashCode(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i);
-  return h;
-}
+const STATUS_MAP: Record<string, { step: number; label: string }> = {
+  sent: { step: 0, label: 'Заявка получена' },
+  review: { step: 1, label: 'На рассмотрении' },
+  interview: { step: 2, label: 'Собеседование' },
+  accepted: { step: 3, label: 'Принят' },
+  rejected: { step: 3, label: 'Отклонено' },
+};
 
 const Field = ({
   label,
@@ -100,31 +104,65 @@ const Index = () => {
     about: '',
   });
   const [checkNick, setCheckNick] = useState('');
-  const [tracked, setTracked] = useState<null | { nick: string; step: number }>(
-    null,
-  );
+  const [tracked, setTracked] = useState<null | {
+    id: number;
+    nick: string;
+    status: string;
+  }>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [tracking, setTracking] = useState(false);
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nick || !form.age || !form.about) {
       toast.error('Заполни обязательные поля');
       return;
     }
-    toast.success('Заявка отправлена! Проверяй статус по нику.');
-    setForm({ nick: '', age: '', phone: '', online: '', about: '' });
+    setSubmitting(true);
+    try {
+      const res = await fetch(APPLY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error();
+      toast.success('Заявка отправлена! Проверяй статус по нику.');
+      setForm({ nick: '', age: '', phone: '', online: '', about: '' });
+    } catch {
+      toast.error('Не удалось отправить заявку. Попробуй позже.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const track = (e: React.FormEvent) => {
+  const track = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!checkNick.trim()) {
       toast.error('Введи игровой ник');
       return;
     }
-    setTracked({ nick: checkNick.trim(), step: 1 });
+    setTracking(true);
+    try {
+      const res = await fetch(
+        `${APPLY_URL}?nick=${encodeURIComponent(checkNick.trim())}`,
+      );
+      if (res.status === 404) {
+        toast.error('Заявка с таким ником не найдена');
+        setTracked(null);
+        return;
+      }
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setTracked(data);
+    } catch {
+      toast.error('Не удалось проверить статус. Попробуй позже.');
+    } finally {
+      setTracking(false);
+    }
   };
 
   return (
@@ -317,10 +355,11 @@ const Index = () => {
             <Button
               type="submit"
               size="lg"
+              disabled={submitting}
               className="w-full font-display uppercase tracking-wider font-600 gold-glow"
             >
-              <Icon name="Send" size={18} />
-              Отправить заявку
+              <Icon name={submitting ? 'Loader2' : 'Send'} size={18} className={submitting ? 'animate-spin' : ''} />
+              {submitting ? 'Отправляем...' : 'Отправить заявку'}
             </Button>
           </form>
         </div>
@@ -353,9 +392,10 @@ const Index = () => {
             />
             <Button
               type="submit"
+              disabled={tracking}
               className="font-display uppercase tracking-wider font-600"
             >
-              <Icon name="Search" size={18} />
+              <Icon name={tracking ? 'Loader2' : 'Search'} size={18} className={tracking ? 'animate-spin' : ''} />
               Проверить
             </Button>
           </form>
@@ -371,18 +411,27 @@ const Index = () => {
                     {tracked.nick}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Заявка №{(Math.abs(hashCode(tracked.nick)) % 9000) + 1000}
+                    Заявка №{tracked.id}
                   </div>
                 </div>
-                <span className="ml-auto text-xs font-medium text-primary bg-primary/10 border border-primary/30 rounded-full px-3 py-1">
-                  На рассмотрении
+                <span
+                  className={`ml-auto text-xs font-medium rounded-full px-3 py-1 border ${
+                    tracked.status === 'rejected'
+                      ? 'text-destructive bg-destructive/10 border-destructive/30'
+                      : tracked.status === 'accepted'
+                        ? 'text-primary bg-primary/10 border-primary/30'
+                        : 'text-primary bg-primary/10 border-primary/30'
+                  }`}
+                >
+                  {STATUS_MAP[tracked.status]?.label || tracked.status}
                 </span>
               </div>
 
               <div className="relative">
                 {STATUS_STEPS.map((s, i) => {
-                  const active = i <= tracked.step;
-                  const current = i === tracked.step;
+                  const currentStep = STATUS_MAP[tracked.status]?.step ?? 0;
+                  const active = i <= currentStep;
+                  const current = i === currentStep;
                   return (
                     <div
                       key={s.key}
@@ -391,7 +440,7 @@ const Index = () => {
                       {i < STATUS_STEPS.length - 1 && (
                         <div
                           className={`absolute left-[19px] top-10 bottom-0 w-0.5 ${
-                            i < tracked.step ? 'bg-primary' : 'bg-border'
+                            i < currentStep ? 'bg-primary' : 'bg-border'
                           }`}
                         />
                       )}
