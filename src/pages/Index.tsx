@@ -95,7 +95,7 @@ const Index = () => {
   const [form, setForm] = useState({
     nick: '',
     age: '',
-    discord: '',
+    phone: '',
     online: '',
     about: '',
   });
@@ -115,7 +115,7 @@ const Index = () => {
       return;
     }
     toast.success('Заявка отправлена! Проверяй статус по нику.');
-    setForm({ nick: '', age: '', discord: '', online: '', about: '' });
+    setForm({ nick: '', age: '', phone: '', online: '', about: '' });
   };
 
   const track = (e: React.FormEvent) => {
@@ -299,11 +299,11 @@ const Index = () => {
                 />
               </Field>
             </div>
-            <Field label="Discord">
+            <Field label="Номер телефона">
               <Input
-                value={form.discord}
-                onChange={(e) => setForm({ ...form, discord: e.target.value })}
-                placeholder="username#0000"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="+7 900 000-00-00"
               />
             </Field>
             <Field label="Почему именно ты? *">
