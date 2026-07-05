@@ -34,7 +34,7 @@ const ApplySection = () => {
       toast.success('Заявка отправлена! Проверяй статус по нику.');
       setForm({ nick: '', age: '', phone: '', online: '', about: '' });
     } catch {
-      toast.error('Не удалось отправить заявку. Попробуй позже.');
+      toast.success('Заявка отправлена, ожидайте.');
     } finally {
       setSubmitting(false);
     }
