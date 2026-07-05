@@ -30,6 +30,7 @@ def handler(event: dict, context) -> dict:
         age = body.get('age')
         phone = (body.get('phone') or '').strip()
         online_hours = (body.get('online') or '').strip()
+        vk = (body.get('vk') or '').strip()
         about = (body.get('about') or '').strip()
 
         if not nick or not age or not about:
@@ -43,16 +44,16 @@ def handler(event: dict, context) -> dict:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         cur.execute(
-            f"INSERT INTO {schema}.applications (nick, age, phone, online_hours, about) "
-            f"VALUES (%s, %s, %s, %s, %s) RETURNING id",
-            (nick, int(age), phone, online_hours, about),
+            f"INSERT INTO {schema}.applications (nick, age, phone, online_hours, vk, about) "
+            f"VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            (nick, int(age), phone, online_hours, vk, about),
         )
         app_id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
 
-        send_notification(app_id, nick, age, phone, online_hours, about)
+        send_notification(app_id, nick, age, phone, online_hours, vk, about)
 
         return {
             'statusCode': 200,
@@ -103,7 +104,7 @@ def handler(event: dict, context) -> dict:
     return {'statusCode': 405, 'headers': headers, 'body': json.dumps({'error': 'Method not allowed'})}
 
 
-def send_notification(app_id, nick, age, phone, online_hours, about):
+def send_notification(app_id, nick, age, phone, online_hours, vk, about):
     sender = os.environ.get('SMTP_EMAIL')
     password = os.environ.get('SMTP_PASSWORD')
     if not sender or not password:
@@ -114,7 +115,8 @@ def send_notification(app_id, nick, age, phone, online_hours, about):
         f"Ник: {nick}\n"
         f"Возраст: {age}\n"
         f"Телефон: {phone or '-'}\n"
-        f"Онлайн: {online_hours or '-'}\n\n"
+        f"Игровой уровень: {online_hours or '-'}\n"
+        f"ВК ID: {vk or '-'}\n\n"
         f"Почему именно он:\n{about}"
     )
     msg = MIMEText(text, 'plain', 'utf-8')

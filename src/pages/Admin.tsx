@@ -19,6 +19,7 @@ type Application = {
   age: number;
   phone: string;
   online_hours: string;
+  vk: string;
   about: string;
   status: string;
   created_at: string;
@@ -180,7 +181,7 @@ const Admin = () => {
                 </span>
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-3 mb-4 text-sm">
+              <div className="grid sm:grid-cols-4 gap-3 mb-4 text-sm">
                 <div>
                   <div className="text-xs text-muted-foreground">Возраст</div>
                   <div>{a.age}</div>
@@ -190,8 +191,12 @@ const Admin = () => {
                   <div>{a.phone || '—'}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Онлайн</div>
+                  <div className="text-xs text-muted-foreground">Игровой уровень</div>
                   <div>{a.online_hours || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">ВК ID</div>
+                  <div>{a.vk || '—'}</div>
                 </div>
               </div>
 

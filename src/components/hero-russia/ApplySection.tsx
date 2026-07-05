@@ -13,6 +13,7 @@ const ApplySection = () => {
     age: '',
     phone: '',
     online: '',
+    vk: '',
     about: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +33,7 @@ const ApplySection = () => {
       });
       if (!res.ok) throw new Error();
       toast.success('Заявка отправлена! Проверяй статус по нику.');
-      setForm({ nick: '', age: '', phone: '', online: '', about: '' });
+      setForm({ nick: '', age: '', phone: '', online: '', vk: '', about: '' });
     } catch {
       toast.success('Заявка отправлена, ожидайте.');
     } finally {
@@ -82,14 +83,14 @@ const ApplySection = () => {
                 type="number"
                 value={form.age}
                 onChange={(e) => setForm({ ...form, age: e.target.value })}
-                placeholder="16+"
+                placeholder="14+"
               />
             </Field>
-            <Field label="Онлайн в день">
+            <Field label="Игровой уровень">
               <Input
                 value={form.online}
                 onChange={(e) => setForm({ ...form, online: e.target.value })}
-                placeholder="напр. 4 часа"
+                placeholder="8+"
               />
             </Field>
           </div>
@@ -98,6 +99,13 @@ const ApplySection = () => {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="+7 900 000-00-00"
+            />
+          </Field>
+          <Field label="ВК ID">
+            <Input
+              value={form.vk}
+              onChange={(e) => setForm({ ...form, vk: e.target.value })}
+              placeholder="vk.com/id123456"
             />
           </Field>
           <Field label="Почему именно ты? *">

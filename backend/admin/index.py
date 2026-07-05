@@ -32,7 +32,7 @@ def handler(event: dict, context) -> dict:
 
     if method == 'GET':
         cur.execute(
-            f"SELECT id, nick, age, phone, online_hours, about, status, created_at "
+            f"SELECT id, nick, age, phone, online_hours, vk, about, status, created_at "
             f"FROM {schema}.applications ORDER BY created_at DESC"
         )
         rows = cur.fetchall()
@@ -45,9 +45,10 @@ def handler(event: dict, context) -> dict:
                 'age': r[2],
                 'phone': r[3],
                 'online_hours': r[4],
-                'about': r[5],
-                'status': r[6],
-                'created_at': r[7].isoformat(),
+                'vk': r[5],
+                'about': r[6],
+                'status': r[7],
+                'created_at': r[8].isoformat(),
             }
             for r in rows
         ]
